@@ -138,6 +138,21 @@ func listen(g *game.Game, p *player.Player) {
 		case "rematch_cancelled":
 			p.InRematch = false
 			g.HandleRematchCancel(p)
+		case "rematch_accept":
+			g.RematchVotes[p.ID] = true
+			other := g.Players[1-p.ID]
+			if other != nil && g.RematchVotes[1-p.ID] {
+				g.Players[0].InRematch = false
+				g.Players[1].InRematch = false
+				g.ResetGame()
+			}
+		case "rematch_decline":
+			other := g.Players[1-p.ID]
+			if other != nil && !other.Disconnected {
+				other.Conn.WriteJSON(map[string]interface{}{
+					"type": "rematch_declined",
+				})
+			}
 		}
 		g.Mutex.Unlock()
 	}
@@ -165,7 +180,6 @@ func botLoop(g *game.Game) {
 		}
 
 		if g.Turn == 1 {
-			// ✅ Check if HUMAN already won (human ID = 1)
 			if g.Board.HasAnyWin(1) {
 				g.GameOver = true
 				human.Conn.WriteJSON(map[string]interface{}{
@@ -176,7 +190,6 @@ func botLoop(g *game.Game) {
 				return
 			}
 
-			// ✅ Get bot move (bot internal ID = 2)
 			col := g.BotBestMoveMiniMax()
 			if !g.Board.IsValidMove(col) {
 				for c := 0; c < game.Cols; c++ {
@@ -187,17 +200,14 @@ func botLoop(g *game.Game) {
 				}
 			}
 
-			// ✅ Apply bot move with ID = 2
 			row := g.Board.ApplyMove(col, 2)
 
-			// ✅ Notify client using external ID = 1 (bot)
 			human.Conn.WriteJSON(map[string]interface{}{
 				"type":   "move",
 				"column": col,
 				"player": 1,
 			})
 
-			// ✅ Check win for bot (ID = 2)
 			if g.Board.CheckWin(col, row, 2) {
 				g.GameOver = true
 				human.Conn.WriteJSON(map[string]interface{}{
