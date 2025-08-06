@@ -133,6 +133,12 @@ func listen(g *game.Game, p *player.Player) {
 			}
 			g.Turn = 1 - p.ID
 		case "rematch_request":
+			if g.Players[1-p.ID] == nil || g.Players[1-p.ID].Disconnected {
+				p.Conn.WriteJSON(map[string]interface{}{
+					"type": "rematch_declined",
+				})
+				break
+			}
 			p.InRematch = true
 			g.HandleRematchRequest(p)
 		case "rematch_cancelled":
@@ -141,11 +147,21 @@ func listen(g *game.Game, p *player.Player) {
 		case "rematch_accept":
 			g.RematchVotes[p.ID] = true
 			other := g.Players[1-p.ID]
-			if other != nil && g.RematchVotes[1-p.ID] {
+
+			if other == nil || other.Disconnected {
+				p.Conn.WriteJSON(map[string]interface{}{
+					"type": "rematch_declined",
+				})
+				g.RematchVotes = [2]bool{false, false}
+				break
+			}
+
+			if g.RematchVotes[0] && g.RematchVotes[1] {
 				g.Players[0].InRematch = false
 				g.Players[1].InRematch = false
 				g.ResetGame()
 			}
+
 		case "rematch_decline":
 			other := g.Players[1-p.ID]
 			if other != nil && !other.Disconnected {
