@@ -225,6 +225,10 @@ func botLoop(g *game.Game) {
 					"type":   "game_over",
 					"winner": 0,
 				})
+				if g.Stats != nil {
+					g.Stats.RecordMatch(human.Name, "Bot", "win")
+					g.Stats.RecordMatch("Bot", human.Name, "lose")
+				}
 				g.Mutex.Unlock()
 				return
 			}
@@ -253,6 +257,12 @@ func botLoop(g *game.Game) {
 					"type":   "game_over",
 					"winner": 1,
 				})
+
+				if g.Stats != nil {
+					g.Stats.RecordMatch("Bot", human.Name, "win")
+					g.Stats.RecordMatch(human.Name, "Bot", "lose")
+				}
+
 				g.Mutex.Unlock()
 				return
 			}
