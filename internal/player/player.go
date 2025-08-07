@@ -12,4 +12,5 @@ type Player struct {
 	Disconnected bool
 	InRematch    bool
 	Mutex        sync.Mutex
+	Name         string
 }

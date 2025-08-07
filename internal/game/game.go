@@ -13,6 +13,7 @@ type Game struct {
 	Mutex        sync.Mutex
 	RematchVotes [2]bool
 	RematchLock  sync.Mutex
+	Stats        Service
 }
 
 func (g *Game) ResetGame() {

@@ -13,10 +13,15 @@ import (
 )
 
 var (
-	matchQueue = make(chan *player.Player, 100)
-	queueLock  sync.Mutex
-	upgrader   = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
+	statService game.Service
+	matchQueue  = make(chan *player.Player, 100)
+	queueLock   sync.Mutex
+	upgrader    = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
 )
+
+func SetStatsService(service game.Service) {
+	statService = service
+}
 
 func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -28,6 +33,11 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	go InitPlayer(p)
 }
 
+func NewWebSocketHandler(service game.Service) http.HandlerFunc {
+	statService = service
+	return HandleWebSocket
+}
+
 func InitPlayer(p *player.Player) {
 	var initMsg map[string]interface{}
 	if err := p.Conn.ReadJSON(&initMsg); err != nil {
@@ -35,9 +45,12 @@ func InitPlayer(p *player.Player) {
 		p.Conn.Close()
 		return
 	}
+	name := initMsg["name"].(string)
 	mode := initMsg["mode"].(string)
+	p.Name = name
+
 	if mode == "bot" {
-		g := &game.Game{Players: [2]*player.Player{p, nil}, Board: game.NewBoard()}
+		g := &game.Game{Players: [2]*player.Player{p, nil}, Board: game.NewBoard(), Stats: statService}
 		p.ID = 0
 		startGame(g)
 	} else {
@@ -52,6 +65,7 @@ func matchPlayer(p *player.Player) {
 			startGame(&game.Game{
 				Players: [2]*player.Player{opp, p},
 				Board:   game.NewBoard(),
+				Stats:   statService,
 			})
 			return
 		}
@@ -69,11 +83,13 @@ func matchPlayer(p *player.Player) {
 					startGame(&game.Game{
 						Players: [2]*player.Player{p, nil},
 						Board:   game.NewBoard(),
+						Stats:   statService,
 					})
 				} else {
 					startGame(&game.Game{
 						Players: [2]*player.Player{opp, p},
 						Board:   game.NewBoard(),
+						Stats:   statService,
 					})
 				}
 			default:
@@ -129,6 +145,13 @@ func listen(g *game.Game, p *player.Player) {
 					"type":   "game_over",
 					"winner": p.ID,
 				})
+
+				if g.Stats != nil && g.Players[0] != nil && g.Players[1] != nil {
+					winner := g.Players[p.ID]
+					loser := g.Players[1-p.ID]
+					g.Stats.RecordMatch(winner.Name, loser.Name, "win")
+					g.Stats.RecordMatch(loser.Name, winner.Name, "lose")
+				}
 				break
 			}
 			g.Turn = 1 - p.ID
