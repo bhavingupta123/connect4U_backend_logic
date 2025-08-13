@@ -1,7 +1,7 @@
 package game
 
 import (
-	"ludo_backend_refactored/internal/model"
+	model "ludo_backend_refactored/internal/model/stat"
 	"ludo_backend_refactored/internal/repo"
 )
 

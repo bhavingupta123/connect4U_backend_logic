@@ -1,6 +1,7 @@
 package game
 
 import (
+	consts "ludo_backend_refactored/internal/config"
 	"math"
 )
 
@@ -10,7 +11,7 @@ func (g *Game) BotBestMoveMiniMax() int {
 	bestScore := math.MinInt
 	bestCol := -1
 
-	for col := 0; col < Cols; col++ {
+	for col := 0; col < consts.Cols; col++ {
 		if !g.Board.IsValidMove(col) {
 			continue
 		}
@@ -25,7 +26,7 @@ func (g *Game) BotBestMoveMiniMax() int {
 	}
 
 	if bestCol == -1 {
-		for col := 0; col < Cols; col++ {
+		for col := 0; col < consts.Cols; col++ {
 			if g.Board.IsValidMove(col) {
 				return col
 			}
@@ -48,7 +49,7 @@ func minimax(board *Board, depth int, maximizing bool) int {
 
 	if maximizing {
 		maxEval := math.MinInt
-		for col := 0; col < Cols; col++ {
+		for col := 0; col < consts.Cols; col++ {
 			if !board.IsValidMove(col) {
 				continue
 			}
@@ -60,7 +61,7 @@ func minimax(board *Board, depth int, maximizing bool) int {
 		return maxEval
 	} else {
 		minEval := math.MaxInt
-		for col := 0; col < Cols; col++ {
+		for col := 0; col < consts.Cols; col++ {
 			if !board.IsValidMove(col) {
 				continue
 			}
@@ -75,8 +76,8 @@ func minimax(board *Board, depth int, maximizing bool) int {
 
 func evaluateBoard(board *Board) int {
 	score := 0
-	for col := 0; col < Cols; col++ {
-		for row := 0; row < Rows; row++ {
+	for col := 0; col < consts.Cols; col++ {
+		for row := 0; row < consts.Rows; row++ {
 			cell := board.GetCell(col, row)
 			if cell == 2 {
 				score += positionScore(col)
@@ -89,8 +90,8 @@ func evaluateBoard(board *Board) int {
 }
 
 func positionScore(col int) int {
-	center := Cols / 2
-	return Cols - abs(col-center)
+	center := consts.Cols / 2
+	return consts.Cols - abs(col-center)
 }
 
 func max(a, b int) int {

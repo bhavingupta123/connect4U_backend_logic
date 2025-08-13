@@ -1,7 +1,7 @@
 package game
 
 import (
-	"ludo_backend_refactored/internal/player"
+	player "ludo_backend_refactored/internal/model/player"
 	"time"
 )
 
@@ -51,5 +51,20 @@ func (g *Game) HandleRematchCancel(p *player.Player) {
 			"type":    "rematch_declined",
 			"message": "Rematch was not accepted.",
 		})
+	}
+}
+
+func (g *Game) ResetGame() {
+	g.Turn = 0
+	g.GameOver = false
+	g.RematchVotes = [2]bool{false, false}
+	g.Board.Reset()
+	for idx, p := range g.Players {
+		if p != nil && !p.Disconnected {
+			p.Conn.WriteJSON(map[string]interface{}{
+				"type":   "rematch_start",
+				"player": idx,
+			})
+		}
 	}
 }

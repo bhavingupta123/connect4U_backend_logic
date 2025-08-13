@@ -3,7 +3,7 @@ package repo
 import (
 	"context"
 	"fmt"
-	"ludo_backend_refactored/internal/model"
+	model "ludo_backend_refactored/internal/model/stat"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"

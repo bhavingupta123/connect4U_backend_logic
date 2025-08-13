@@ -1,10 +1,12 @@
 package server
 
 import (
+	"fmt"
 	"log"
 	"ludo_backend_refactored/internal/config"
+	consts "ludo_backend_refactored/internal/config"
 	"ludo_backend_refactored/internal/game"
-	"ludo_backend_refactored/internal/player"
+	player "ludo_backend_refactored/internal/model/player"
 	"net/http"
 	"sync"
 	"time"
@@ -141,9 +143,18 @@ func listen(g *game.Game, p *player.Player) {
 
 			if g.Board.CheckWin(col, row, p.ID+1) {
 				g.GameOver = true
+
+				winCells := g.Board.GetWinningCells(col, row, p.ID+1)
+				winCellData := make([][]int, len(winCells))
+
+				for i, cell := range winCells {
+					winCellData[i] = []int{cell[0], cell[1]}
+				}
+
 				sendToAll(g, map[string]interface{}{
-					"type":   "game_over",
-					"winner": p.ID,
+					"type":          "game_over",
+					"winner":        p.ID,
+					"winning_cells": winCellData,
 				})
 
 				if g.Stats != nil && g.Players[0] != nil && g.Players[1] != nil {
@@ -235,7 +246,7 @@ func botLoop(g *game.Game) {
 
 			col := g.BotBestMoveMiniMax()
 			if !g.Board.IsValidMove(col) {
-				for c := 0; c < game.Cols; c++ {
+				for c := 0; c < consts.Cols; c++ {
 					if g.Board.IsValidMove(c) {
 						col = c
 						break
@@ -253,10 +264,21 @@ func botLoop(g *game.Game) {
 
 			if g.Board.CheckWin(col, row, 2) {
 				g.GameOver = true
+
+				winCells := g.Board.GetWinningCells(col, row, 2)
+				winCellData := make([][]int, len(winCells))
+				for i, cell := range winCells {
+					winCellData[i] = []int{cell[0], cell[1]}
+				}
+
 				human.Conn.WriteJSON(map[string]interface{}{
-					"type":   "game_over",
-					"winner": 1,
+					"type":          "game_over",
+					"winner":        1,
+					"winning_cells": winCellData,
 				})
+
+				fmt.Println("wincell data:")
+				fmt.Println(winCellData)
 
 				if g.Stats != nil {
 					g.Stats.RecordMatch("Bot", human.Name, "win")

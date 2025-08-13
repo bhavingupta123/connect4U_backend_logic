@@ -1,6 +1,7 @@
 package game
 
 import (
+	consts "ludo_backend_refactored/internal/config"
 	"math"
 )
 
@@ -8,7 +9,7 @@ func (g *Game) BotBestMove() int {
 	bestScore := math.MinInt
 	bestCol := -1
 
-	for col := 0; col < Cols; col++ {
+	for col := 0; col < consts.Cols; col++ {
 		if !g.Board.IsValidMove(col) {
 			continue
 		}
@@ -35,7 +36,7 @@ func (g *Game) BotBestMove() int {
 	}
 
 	if bestCol == -1 {
-		for col := 0; col < Cols; col++ {
+		for col := 0; col < consts.Cols; col++ {
 			if g.Board.IsValidMove(col) {
 				return col
 			}
@@ -45,7 +46,7 @@ func (g *Game) BotBestMove() int {
 }
 
 func evaluateColumn(col int) int {
-	center := Cols / 2
+	center := consts.Cols / 2
 	return 3 - abs(col-center)
 }
 

@@ -1,6 +1,6 @@
 package repo
 
-import "ludo_backend_refactored/internal/model"
+import model "ludo_backend_refactored/internal/model/stat"
 
 type Repository interface {
 	SaveResult(result model.MatchResult) error
